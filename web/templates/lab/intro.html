@@ -1,0 +1,183 @@
+{{extends "layout.html"}}
+{{block title()}}API 소개{{end}}
+{{block localCSS()}}
+<style>
+	blockquote {
+		font-size: 14px;
+	}
+</style>
+{{end}}
+
+{{block chead()}}
+<h1>API 소개</h1>
+{{end}}
+
+{{block body()}}
+
+<div class="box box-primary">
+	<div class="box-header with-border">
+		<i class="fa fa-bullhorn"></i>
+		<h3 class="box-title">개요</h3>
+	</div>
+	<!-- /.box-header -->
+	<div class="box-body">
+		<dl class="dl-horizontal">
+			<dt>문장 분리 및 군더더기 제거</dt>
+			<dd>문장 단위를 구별해서 반환합니다.</dd>
+			<dt>형태소 분석</dt>
+			<dd>문장 단위를 구별한 뒤, 각각의 형태소 상세내역을 분석해서 반환합니다.</dd>
+			<dt>저널리즘 가치 점수화</dt>
+			<dd>언론재단 뉴스트러스트 위원회에서 분석한 알고리즘에 기반한 평가점수를 반환합니다.</dd>
+			<dt>통합 평가</dt>
+			<dd>앞선 분석 내용들을 모두 종합해서 반환합니다.</dd>
+		</dl>
+	</div>
+	<!-- /.box-body -->
+</div>
+<!-- /.box -->
+<div class="box">
+	<div class="box-header with-border">
+		<h3 class="box-title">1. 형태소 분석 (api/postag)</h3>
+	</div>
+	<!-- /.box-header -->
+	<div class="box-body">
+		<blockquote>
+			<p>curl -X POST \</br>
+				http://ntadm.newstrust.kr/api/postag \</br>
+				-H 'content-type: multipart/form-data' \</br>
+				-F 'content=이 부분에 테스트할 문단을 입력합니다.'</p>
+		</blockquote>
+		<table class="table table-bordered">
+			<tbody><tr>
+				<th>key</th>
+				<th>header / field</th>
+				<th>note</th>
+			</tr>
+			<tr>
+				<td>content-type</td>
+				<td><span class="label label-warning">header</span></td>
+				<td>multipart/form-data</td>
+			</tr>
+			<tr>
+				<td>content</td>
+				<td><span class="label label-primary">field</span></td>
+				<td>분석을 요청할 내용</td>
+			</tr>
+			</tbody></table>
+	</div>
+	<!-- /.box-body -->
+</div>
+<!-- /.box -->
+<div class="box">
+	<div class="box-header with-border">
+		<h3 class="box-title">2. 계량 요인 추출 (api/metric)</h3></br>
+		<p class="text-light-blue"></p>
+	</div>
+	<!-- /.box-header -->
+	<div class="box-body">
+		<blockquote>
+			<p>curl -X POST \</br>
+				http://ntadm.newstrust.kr/api/split \</br>
+				-H 'content-type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW' \</br>
+				-F 'content=이 부분에 테스트할 문단을 입력합니다.'</p>
+		</blockquote>
+		<blockquote>
+			<p>curl -X POST \</br>
+				http://ntadm.newstrust.kr/api/postag \</br>
+				-H 'content-type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW' \</br>
+				-F 'content=이 부분에 테스트할 문단을 입력합니다.'</p>
+		</blockquote>
+		<table class="table table-bordered">
+			<tbody><tr>
+				<th>key</th>
+				<th>header / field</th>
+				<th>note</th>
+			</tr>
+			<tr>
+				<td>content-type</td>
+				<td><span class="label label-warning">header</span></td>
+				<td>multipart/form-data</td>
+			</tr>
+			<tr>
+				<td>content</td>
+				<td><span class="label label-primary">field</span></td>
+				<td>분석/정제를 요청할 내용</td>
+			</tr>
+			</tbody></table>
+	</div>
+	<!-- /.box-body -->
+</div>
+<!-- /.box -->
+<div class="box">
+	<div class="box-header">
+		<h3 class="box-title">4. 저널리즘 가치 점수화 (api/trust)</h3></br>
+		<h3 class="box-title">5. 통합 평가 (api/integrate)</h3>
+		<p class="text-light-blue"></p>
+	</div>
+	<!-- /.box-header -->
+	<div class="box-body">
+		<blockquote>
+			<p>curl -X POST \</br>
+				http://ntadm.newstrust.kr/api/trust \</br>
+				-H 'content-type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW' \</br>
+				-F 'title=기사 제목'</br>
+				-F 'content=기사 본문..'</br>
+				-F 'mediaType=신문'</br>
+				-F 'category=사회'</p>
+		</blockquote>
+		<blockquote>
+			<p>curl -X POST \</br>
+				http://ntadm.newstrust.kr/api/integrate \</br>
+				-H 'content-type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW' \</br>
+				-F 'title=기사 제목'</br>
+				-F 'content=기사 본문..'</br>
+				-F 'mediaType=신문'</br>
+				-F 'category=사회'</p>
+		</blockquote>
+		<table class="table table-bordered">
+			<tbody><tr>
+				<th>key</th>
+				<th>header / field</th>
+				<th>note</th>
+			</tr>
+			<tr>
+				<td>content-type</td>
+				<td><span class="label label-warning">header</span></td>
+				<td>multipart/form-data</td>
+			</tr>
+			<tr>
+				<td>title</td>
+				<td><span class="label label-primary">field</span></td>
+				<td>기사 제목</td>
+			</tr>
+			<tr>
+				<td>content</td>
+				<td><span class="label label-primary">field</span></td>
+				<td>형태소 분석을 요청할 내용</td>
+			</tr>
+			<tr>
+				<td>mediaType</td>
+				<td><span class="label label-primary">field</span></td>
+				<td>(언론사 유형) 신문 / 방송</td>
+			</tr>
+			<tr>
+				<td>category</td>
+				<td><span class="label label-primary">field</span></td>
+				<td>(카테고리) 정치 / 경제 / 사회 / 국제 / 문화 예술 / IT 과학 / 라이프스타일 / 스포츠 / 교육 / 연예 </td>
+			</tr>
+			</tbody></table>
+	</div>
+	<!-- /.box-body -->
+</div>
+<!-- /.box -->
+
+{{end}}
+
+{{block localJS()}}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+
+<script>
+$(window).load(function(){ hideWaitIndi(); });
+</script>
+{{end}}

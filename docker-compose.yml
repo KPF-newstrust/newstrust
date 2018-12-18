@@ -1,0 +1,55 @@
+version: "2"
+services:
+  web:
+    image: golang:1.8
+    container_name: newstrust-web
+    working_dir: /go/src/newstrust
+    command: /go/src/newstrust/start.sh
+    restart: always
+    volumes:
+      - ./web:/go/src/newstrust
+    ports:
+      - "60000:8091"
+    links:
+      - mongo
+      - redis
+      - mq
+  mongo:
+    image: mongo:3.6.6
+    container_name: newstrust-mongo
+    restart: always
+    volumes: 
+      - ./mongo:/data/db
+    ports:
+      - "60001:27017"
+  redis:
+    image: redis:3.2.12
+    container_name: newstrust-redis
+    restart: always
+  mq:
+    image: rabbitmq:3.7.7
+    container_name: newstrust-mq
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=ntrust
+      - RABBITMQ_DEFAULT_PASS=ntrust
+      - RABBITMQ_DEFAULT_VHOST=ntrust
+  worker:
+    build: .
+    image: nt-worker
+    working_dir: /work
+    restart: always
+    command: /work/ntrust-worker/start_worker.sh
+    volumes:
+      - ./worker:/work/ntrust-worker
+    environment:
+      - MQ_URL=amqp://ntrust:ntrust@newstrust-mq:5672/ntrust?heartbeat=10
+      - MONGO_URL_NTRUST=mongodb://newstrust-mongo:27017
+      - MONGO_DB_NTRUST=ntrust2
+      - MONGO_URL_CRAWLING=mongodb://newstrust-mongo:27017 #크롤링디비
+      - MONGO_DB_CRAWLING=ntrust2 #크롤링디비
+      - PYTHONIOENCODING=utf-8
+      - WORKER_ID=dev2018
+    links:
+      - mq
+      - mongo

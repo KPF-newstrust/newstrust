@@ -1,0 +1,226 @@
+{{extends "layout.html"}}
+{{block title()}}형태소사전 검색{{end}}
+{{block localCSS()}}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.15/css/dataTables.bootstrap.min.css">
+<style>
+tfoot {
+    display: table-header-group;
+}
+select {
+    width: 100%;
+}
+#attrPopup {
+	position: absolute;
+	background-color: #ddd;
+	border: 1px solid #000;
+	border-radius: 5px;
+	padding: 2px 5px;
+	z-index: 1000;
+	max-width: 400px;
+	display: none;
+}
+</style>
+{{end}}
+
+{{block chead()}}
+<h1>형태소사전 검색
+    <button type="button" class="btn btn-danger btn-xs pull-right" onclick="javascript:$('#modalAdd').modal()">단어 제안하기</button>
+</h1>
+{{end}}
+
+{{block body()}}
+<div class="box">
+    <div class="box-body">
+        <table id="jqdt1" class="table table-condensed table-hover" width="100%">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>버전</th>
+                    <th>단어</th>
+                    <th>품사</th>
+                    <th>형태소 정보</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+<div class="modal modal-info fade" id="modalAdd">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">신규 단어 제안</h4>
+            </div>
+            <div class="modal-body">
+                <form role="form" name="formNew" id="formNew" method="POST" action="custom" onsubmit="return sbmChk()">
+                    <input type="hidden" name="_csrf" value="{{ ._csrf }}"/>
+                    <input type="hidden" name="meta" />
+                    <div class="form-group">
+                        <label>단어</label>
+                        <input type="text" class="form-control" name="word">
+                    </div>
+                    <div class="form-group">
+                        <label>메타정보</label>
+                        <div>
+                            <label><input type="checkbox" id="ps">인물</label>
+                            <label><input type="checkbox" id="og">기관</label>
+                            <label><input type="checkbox" id="lc">지역</label>
+                        </div>
+                    </div>
+                    <p>(관리자의 승인 이후 등록처리 됩니다.)</p>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline pull-left" data-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-outline" onclick="javascript:$('#formNew').submit()">확인</button>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{block localJS()}}
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script>
+$(function () {
+    var jqdt = $("#jqdt1").DataTable({
+        "lengthMenu": [15, 50],
+        "order": [[ 0, 'desc' ]],
+        language: {
+            "infoEmpty": "검색 결과가 없습니다.",
+            "zeroRecords": "검색 결과가 없습니다. </br> 형태소사전에 새로 등록할 수 있습니다. (상단버튼)",
+            "emptyTable": "테이블에 표시할 내용이 없습니다.",
+            "info": "_TOTAL_ 개의 항목 중 _START_ ~ _END_",
+            "infoFiltered": " (전체 _MAX_ 개)",
+            "lengthMenu": "페이지 당 _MENU_ 항목 표시",
+            "search": "<input type=\"checkbox\" id=\"like\" name=\"like\">(음절포함) ",
+            "searchPlaceholder": "단어 검색",
+            paginate: {
+                first:    '«',
+                previous: '‹',
+                next:     '›',
+                last:     '»'
+            },
+            aria: {
+                paginate: {
+                    first:    'First',
+                    previous: 'Previous',
+                    next:     'Next',
+                    last:     'Last'
+                }
+            }
+        },
+        serverSide: true,
+        ajax: {
+            url: '/dic/mecab.json',
+            type: 'POST',
+            data: function (d) {
+                d._csrf = "{{ ._csrf }}",
+                d.like = $('#like').is(':checked');
+            }
+        },
+        columns: [
+            {"data": null, "orderable": false, "visible": false},
+            {"data": "version", "orderable": false},
+            {"data": "word", "orderable": false},
+            {
+                "data": "tag",
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    $(nTd).text(tagging(sData));
+                },
+                "orderable": false},
+            {
+                "data": "meaning",
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    sData += '/'+oData.tail+'/'+oData.sound+'/'+oData.type+'/'+oData.tag_first+'/'+oData.tag_last+'/'+oData.structure;
+                    $(nTd).text(tagging(sData));
+                },
+                "orderable": false
+            }
+        ]
+    });
+
+    $('#search').on('keyup change', function () { //단어검색
+        jqdt.column(1).search(
+                $('#search').val()
+        ).draw();
+    });
+
+    $("#like").click(function() { //포함단어 checkbox
+        jqdt.ajax.reload();
+    });
+
+    applyDtFilters("#jqdt1",jqdt);
+    
+    hideWaitIndi();
+});
+var tags = {
+    NNG: 'NNG(일반 명사)',
+    NNP: 'NNP(고유 명사)',
+    NNB: 'NNB(의존 명사)',
+    NNBC: 'NNBC(단위를 나타내는 명사)',
+    NR: 'NR(수사)',
+    NP: 'NP(대명사)',
+    VV: 'VV(동사)',
+    VA: 'VA(형용사)',
+    VX: 'VX(보조 용언)',
+    VCP: 'VCP(긍정 지정사)',
+    VCN: 'VCN(부정 지정사)',
+    MM: 'MM(관형사)',
+    MAG: 'MAG(일반 부사)',
+    MAJ: 'MAJ(접속 부사)',
+    IC: 'IC(감탄사)',
+    JKS: 'JKS(주격 조사)',
+    JKC: 'JKC(보격 조사)',
+    JKG: 'JKG(관형격 조사)',
+    JKO: 'JKO(목적격 조사)',
+    JKB: 'JKB(부사격 조사)',
+    JKV: 'JKV(호격 조사)',
+    JKQ: 'JKQ(인용격 조사)',
+    JX: 'JX(보조사)',
+    JC: 'JC(접속 조사)',
+    EP: 'EP(선어말 어미)',
+    EF: 'EF(종결 어미)',
+    EC: 'EC(연결 어미)',
+    ETN: 'ETN(명사형 전성 어미)',
+    ETM: 'ETM(관형형 전성 어미)',
+    XPN: 'XPN(체언 접두사)',
+    XSN: 'XSN(명사 파생 접미사)',
+    XSV: 'XSV(동사 파생 접미사)',
+    XSA: 'XSA(형용사 파생 접미사)',
+    XR: 'XR(어근)',
+    SF: 'SF(마침표, 물음표, 느낌표)',
+    SE: 'SE(줄임표 …)',
+    SSO: 'SSO(여는 괄호 (, [)',
+    SSC: 'SSC(닫는 괄호 ), ])',
+    SC: 'SC(구분자 , · / :)',
+    SY: 'SY(기타기호)',
+    SL: 'SL(외국어)',
+    SH: 'SH(한자)',
+    SN: 'SN(숫자)'
+};
+function tagging(str) {
+    return str.replace(/([A-Z]){2,}(?![(])/g, function () {
+        //(대문자){2글자 이상}(괄호로시작하지않는)
+        return tags[arguments[0]];
+    });
+}
+function sbmChk()
+{
+    var form = document.forms["formNew"];
+    if (form.word.value.trim() == "") {
+        alert("단어을 입력해주세요.");
+        return false;
+    }
+    
+    var arr = $.map( $('#formNew :checked'), function( box, i ) {
+        return box.id;
+    });
+    form.meta.value = arr.join(",");
+    return true;
+}
+</script>
+{{end}}

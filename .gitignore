@@ -1,0 +1,10 @@
+.idea
+.vscode
+*.iml
+__pycache__
+web/static/userdic*.csv
+worker/tests/*
+worker/mecab/userdic.csv*
+
+/mongo
+gin-bin

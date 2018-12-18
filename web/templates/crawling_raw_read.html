@@ -1,0 +1,86 @@
+{{extends "layout.html"}}
+{{block title()}}크롤링 기사{{end}}
+
+{{block localCSS()}}
+<style>
+tfoot input {
+	width: 100%;
+	padding: 3px;
+	box-sizing: border-box;
+}
+tfoot {
+    display: table-header-group;
+}
+#datepicker {
+	text-align: center;
+}
+.dataTables_filter {
+    display: none; 
+}
+</style>
+{{end}}
+
+{{block chead()}}
+<h1>크롤링 기사
+</h1>
+{{end}}
+
+{{block body()}}
+<div class="box">
+    <div class="box-body">
+		<table class="matrix">
+			<tr>
+				<th width=85px>News ID</th>
+				<td>{{ .item.NewsId }}</td>
+			</tr>
+			<tr>
+				<th>입력 시간</th>
+				<td>{{ .item.RegDt }}</td>
+			</tr>
+			</tr>
+			<tr>
+				<th>수정 시간</th>
+				<td>{{ .item.ModiDt }}</td>
+			</tr>
+			<tr>
+				<th>언론사 이름</th>
+				<td>{{ .item.CpKorName }} ({{ .item.CpEngName }})</td>
+			</tr>
+			</tr>
+			<tr>
+				<th>이미지</th>
+				<td>{{ .item.ImageUrl }}</td>
+			</tr>
+			</tr>
+			<tr>
+				<th>비디오</th>
+				<td>{{ .item.VideoUrl }}</td>
+			</tr>
+			</tr>
+			<tr>
+				<th>제목</th>
+				<td>{{ .item.Title }}</td>
+			</tr>
+			</tr>
+			<tr>
+				<th>요약</th>
+				<td>{{ .item.Thumbnail }}</td>
+			</tr>
+			</tr>
+			<tr>
+				<th>전문</th>
+				<td>{{ .item.Content }}</td>
+			</tr>
+		</table>
+    </div>
+</div>
+{{end}}
+
+{{block localJS()}}
+<script>
+$(function () {
+    hideWaitIndi();
+});
+	
+</script>
+{{end}}

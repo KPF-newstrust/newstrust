@@ -1,0 +1,76 @@
+
+	
+<ul class="nav nav-tabs">
+	<li class="active"><a href="#tab_Mecab" data-toggle="tab" aria-expanded="true">MeCab</a></li>
+	<li class=""><a href="#tab_Hannanum" data-toggle="tab" aria-expanded="false">Hannanum</a></li>
+	<li class=""><a href="#tab_Kkma" data-toggle="tab" aria-expanded="false">Kkma</a></li>
+	<li class=""><a href="#tab_Twitter" data-toggle="tab" aria-expanded="false">Twitter</a></li>
+</ul>
+<div class="tab-content">
+	<div class="tab-pane active" id="tab_Mecab">
+		<table class="matrix">
+			<tr>
+				<!--<th>형태소 분석</th>-->
+				<td><svg class="mecab"></svg></td>
+			</tr>
+		</table>
+	</div>
+
+	<div class="tab-pane" id="tab_Hannanum">
+		<table class="matrix">
+			<tr>
+				<!--<th>형태소 분석</th>-->
+				<td><svg class="hannn"></svg></td>
+			</tr>
+		</table>
+	</div>
+
+	<div class="tab-pane" id="tab_Kkma">
+		<table class="matrix">
+			<tr>
+				<!--<th>형태소 분석</th>-->
+				<td><svg class="kkma"></svg></td>
+			</tr>
+		</table>
+	</div>
+
+	<div class="tab-pane" id="tab_Twitter">
+		<table class="matrix">
+			<tr>
+				<!--<th>형태소 분석</th>-->
+				<td><svg class="twitter"></svg></td>
+			</tr>
+		</table>
+	</div>
+
+</div>
+
+<script src="/public/js/tagvis.js"></script>
+<script>
+
+mecabTags=[{{ cnt = 0 }}
+{{ range wp := .entity.MecabTags }}{{ if cnt == 0 }}[{{end}}["{{wp.Word|safeJs}}","{{wp.Pos}}"]{{ if wp.Pos == "SF" }}],
+{{ cnt = 0 }}{{ else }}{{ cnt = cnt + 1 }},{{ end }}{{ end }}{{ if cnt > 0 }}]{{end}}];
+
+hannnTags=[{{ cnt = 0 }}
+{{ range wp := .entity.HannanumTags }}{{ if cnt == 0 }}[{{end}}["{{wp.Word|safeJs}}","{{wp.Pos}}"]{{ if wp.Pos == "SF" }}],
+{{ cnt = 0 }}{{ else }}{{ cnt = cnt + 1 }},{{ end }}{{ end }}{{ if cnt > 0 }}]{{end}}];
+
+kkmaTags=[{{ cnt = 0 }}
+{{ range wp := .entity.KkmaTags }}{{ if cnt == 0 }}[{{end}}["{{wp.Word|safeJs}}","{{wp.Pos}}"]{{ if wp.Pos == "SF" }}],
+{{ cnt = 0 }}{{ else }}{{ cnt = cnt + 1 }},{{ end }}{{ end }}{{ if cnt > 0 }}]{{end}}];
+
+twitTags=[{{ cnt = 0 }}
+{{ range wp := .entity.TwitterTags }}{{ if cnt == 0 }}[{{end}}["{{wp.Word|safeJs}}","{{wp.Pos}}"]{{ if wp.Pos == "Punctuation" && wp.Word == "." }}],
+{{ cnt = 0 }}{{ else }}{{ cnt = cnt + 1 }},{{ end }}{{ end }}{{ if cnt > 0 }}]{{end}}];
+
+
+function visTags()
+{
+	VisualizePostag("svg.mecab", mecabTags);
+	VisualizePostag("svg.kkma", kkmaTags);
+	VisualizePostag("svg.hannn", hannnTags);
+	VisualizePostag("svg.twitter", twitTags);	
+}
+
+</script>

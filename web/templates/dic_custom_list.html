@@ -1,0 +1,203 @@
+{{extends "layout.html"}}
+{{block title()}}형태소사전 관리{{end}}
+{{block localCSS()}}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/select/1.2.7/css/select.dataTables.min.css">
+<style>
+tfoot {
+    display: table-header-group;
+}
+select {
+    width: 100%;
+}
+#attrPopup {
+	position: absolute;
+	background-color: #ddd;
+	border: 1px solid #000;
+	border-radius: 5px;
+	padding: 2px 5px;
+	z-index: 1000;
+	max-width: 400px;
+	display: none;
+}
+</style>
+{{end}}
+
+{{block chead()}}
+<h1>형태소사전 관리
+    <button type="button" class="btn btn-primary btn-xs pull-right" onclick="javascript:add()">선택한 단어 등록</button>        
+</h1>
+{{end}}
+
+{{block body()}}
+<div class="box">
+    <div class="box-body">
+        <table id="jqdt1" class="table table-condensed table-hover" width="100%">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th>단어</th>
+                    <th>메타정보</th>
+                    <th>일시</th>
+                    <th>작성자</th>
+                    <th>등록 여부</th>                
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+<div class="box box-success">
+    <div class="box-body">
+    <button type="button" class="btn btn-success btn-xs" onclick="javascript:publish()">사전 업데이트</button>
+    <p>※ 등록되어있는 단어들을 기존 Mecab 형태소분석기 사전에 추가하는 작업이 진행됩니다. 워커 컨테이너들이 모두 업데이트되기까지 시간이 걸립니다.</p>
+    </div>
+</div>
+{{end}}
+
+{{block localJS()}}
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.2.7/js/dataTables.select.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script src="/public/js/select2.full.min.js"></script>
+<script>
+$(function () {
+    var jqdt = $("#jqdt1").DataTable({
+        "lengthMenu": [15, 50],
+        "order": [[ 0, 'desc' ]],
+        language: {
+            "infoEmpty": "검색 결과가 없습니다.",
+            "zeroRecords": "검색 결과가 없습니다.",
+            "emptyTable": "테이블에 표시할 내용이 없습니다.",
+            "info": "_TOTAL_ 개의 항목 중 _START_ ~ _END_",
+            "infoFiltered": " (전체 _MAX_ 개)",
+            "lengthMenu": "페이지 당 _MENU_ 항목 표시",
+            "search": "<input type=\"checkbox\" id=\"like\" name=\"like\">(음절포함) ",
+            "searchPlaceholder": "단어 검색",
+            "select": {
+                "rows": "%d개 선택됨",
+            },
+            paginate: {
+                first:    '«',
+                previous: '‹',
+                next:     '›',
+                last:     '»'
+            },
+            aria: {
+                paginate: {
+                    first:    'First',
+                    previous: 'Previous',
+                    next:     'Next',
+                    last:     'Last'
+                }
+            }
+        },
+        serverSide: true,
+        ajax: {
+            url: '/admin/dic/custom.json',
+            type: 'POST',
+            data: function (d) {
+                d._csrf = "{{ ._csrf }}",
+                d.like = $('#like').is(':checked');
+            }
+        },
+        columns: [
+            {"data": null, "defaultContent": "", "orderable": false, "visible": false},
+            {
+                "data": "_id", "orderable": false, "className":"select-checkbox",
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    $(nTd).attr('meta-id',sData);
+                    $(nTd).text("");                    
+                }
+            },
+            {"data": "word", "orderable": false},
+            {
+                "data": "meta",
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    $(nTd).text(tagging(sData));
+                },
+                "orderable": false},
+            {"data": "date", "orderable": false},
+            {"data": "user_name", "orderable": false},
+            {"data": "applied"}
+        ],
+        select: {
+            style: 'multi',
+            selector: 'td.select-checkbox'
+        }
+    });
+
+    $('#search').on('keyup change', function () { //단어검색
+        jqdt.column(1).search(
+            $('#search').val()
+        ).draw();
+    });
+
+    $("#like").click(function() { //포함단어 checkbox
+        jqdt.ajax.reload();
+    });
+
+    applyDtFilters("#jqdt1",jqdt);
+    
+    hideWaitIndi();
+});
+var tags = {
+    ps: '인물',
+    og: '기관',
+    lc: '지역'
+};
+function tagging(str) {
+    if (str !== null) {
+        return str.toString().replace(/([a-z]){2,}/g, function () {
+            //(소문자){2글자 이상}
+            return tags[arguments[0]];
+        });
+    }
+}
+
+function add() {
+    var arr = $.map( $('tr.selected td.select-checkbox'), function(box, i) {
+        return $(box).attr('meta-id');
+    });
+
+    if (arr.length < 1) {
+        alert('등록할 단어를 선택하세요.');
+        return;
+    }
+
+    console.log('words : ' + arr.join(","));
+    $.ajax({
+        method: "POST",
+        url: "/admin/dic/custom.add",
+        data: {
+            "_csrf":  "{{ ._csrf }}",
+            "words": arr.join(",")
+        },
+        success: function(resp) {
+            console.log('resp : ' + resp);
+            if (resp == 0) {
+                alert("모두 등록된 단어입니다.")
+            } else {
+                alert(resp + '개의 단어가 등록되었습니다. 사전 업데이트시 반영됩니다.');
+            }
+            window.location.reload();
+        }
+    });
+}
+
+function publish() {
+    $.ajax({
+        method: "POST",
+        url: "/admin/dic/custom.publish",
+        data: {
+            "_csrf":  "{{ ._csrf }}"
+        },
+        success: function(resp) {
+            console.log('resp : ' + resp);
+            // console.log('resp : ' + JSON.parse(resp));
+            alert(resp.data.message);
+        }
+    });
+}
+</script>
+{{end}}

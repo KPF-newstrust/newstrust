@@ -1,0 +1,133 @@
+{{extends "layout.html"}}
+{{block title()}}크롤링 기사{{end}}
+
+{{block localCSS()}}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+<style>
+tfoot input {
+	width: 100%;
+	padding: 3px;
+	box-sizing: border-box;
+}
+tfoot {
+    display: table-header-group;
+}
+#datepicker {
+	text-align: center;
+}
+.dataTables_filter {
+    display: none; 
+}
+</style>
+{{end}}
+
+{{block chead()}}
+<h1>크롤링 기사
+</h1>
+{{end}}
+
+{{block body()}}
+<div class="box">
+    <div class="box-body">
+        <table id="jqdt1" class="table table-condensed table-hover" width="100%">
+            <thead>
+                <tr>
+                  	<th>입력시간</th>
+				  	<th>언론사 코드</th>
+					<th>언론사 이름</th>
+                    <th>제목</th>
+					<!-- <th>내용</th> -->
+                </tr>
+			</thead>
+			<!-- <tfoot>
+				<tr>
+					<th></th>
+					<th><input type="text" placeholder="언론사 코드 필터" data-column="1"></th>
+					<th><input type="text" placeholder="언론사 이름 필터" data-column="2"></th>
+					<th><input type="text" placeholder="엑셀 카테고리 필터" data-column="3"></th>
+					<th><input type="text" placeholder="수동 카테고리 필터" data-column="4"></th>
+					<th><input type="text" placeholder="추측 카테고리 필터" data-column="5"></th>
+					<th><input type="text" placeholder="바이라인 필터" data-column="6"></th>
+					<th><input type="text" placeholder="제목 필터" data-column="7"></th>
+				</tr>
+			</tfoot> -->
+        </table>
+    </div>
+</div>
+{{end}}
+
+{{block localJS()}}
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script>
+$(function () {
+    var jqdt = $("#jqdt1").DataTable({
+        "lengthMenu": [25, 50],
+        language: {
+            "infoEmpty": "검색 결과가 없습니다.",
+            "emptyTable": "테이블에 표시할 내용이 없습니다.",
+            "info": "_TOTAL_ 개의 항목 중 _START_ ~ _END_",
+            "infoFiltered": " (전체 _MAX_ 개)",
+            "lengthMenu": "페이지 당  _MENU_  항목 표시",
+            "searching":false,
+            paginate: {
+                first:    '«',
+                previous: '‹',
+                next:     '›',
+                last:     '»'
+            },
+            aria: {
+                paginate: {
+                    first:    'First',
+                    previous: 'Previous',
+                    next:     'Next',
+                    last:     'Last'
+                }
+            }
+        },
+		serverSide: true,
+        ajax: {
+            url: '/admin/crawling/raw.json',
+            type: 'POST',
+            data: function (d) {
+                d._csrf = "{{ ._csrf }}";                
+            }
+        },
+        columns: [
+            { "data": "regDt", "orderable":false },
+            { "data": "cpId", "orderable":false },
+			{ "data": "cpKorName", "orderable":false },
+            { "data": "title", "orderable":false,
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    $(nTd).html('<a href="/admin/crawling/raw/'+oData.newsId+'" target="_blank" title="'+oData.newsId+'">'+escapeHtml(sData)+'</a>');
+                }
+            }
+        ],
+        columnDefs: [
+            {
+                targets: -1,
+                className: 'dt-head-center'
+            }
+        ]
+	})
+	.on('preXhr.dt', function(e, settings, data) {
+		showWaitIndi();
+	})
+	.on('xhr.dt', function(e, settings, data) {
+		hideWaitIndi();
+	});
+
+	jqdt.columns().every(function () {
+        var that = this;
+ 
+        $('input', this.footer() ).on('keyup change', function() {
+            if (that.search() !== this.value) {
+                that.search(this.value).draw();
+            }
+        });
+	});
+	
+});
+	
+</script>
+{{end}}
